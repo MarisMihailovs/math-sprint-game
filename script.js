@@ -30,14 +30,95 @@ let equationObject = {};
 const wrongFormat = [];
 
 // Time
+let timer;
+let timePlayed = 0;
+let baseTime = 0;
+let penaltyTime = 0;
+let finalTime = 0;
+let finalTimeDisplay = '0.0s';
+
 
 // Scroll
 let valueY = 0;
 
+
+// reset the game
+function playAgain() {
+  gamePage.addEventListener('click', startTimer);
+  scorePage.hidden = true;
+  splashPage.hidden = false;
+  equationsArray = [];
+  playerGuessArray = [];
+  valueY = 0;
+  playAgainBtn.hidden = true;
+}
+
+
+// show score page
+function showScorePage() {
+  // play again after 1s
+  setTimeout(() => {
+    playAgainBtn.hidden = false;
+  }, 1000);
+  gamePage.hidden = true;
+  scorePage.hidden = false;
+}
+
+
+// format and display time in dom
+
+function scoresToDOM() {
+  finalTimeDisplay = finalTime.toFixed(1);
+  baseTime = timePlayed.toFixed(1);
+  penaltyTime = penaltyTime.toFixed(1);
+  baseTimeEl.textContent = `Base Time: ${baseTime}s`;
+  penaltyTime.textContent = `penalty: +${penaltyTime}s`;
+  finalTimeEl.textContent = `${finalTimeDisplay}s`;
+  // scroll to top, go to score page
+  itemContainer.scrollTo({ top: 0, behavior: 'instant' });
+  showScorePage();
+}
+
+//stop timer and process results
+function checkTime() {
+
+  if (playerGuessArray.length == questionAmount) {
+    clearInterval(timer);
+    equationsArray.forEach((equation, index) => {
+      if (equation.evaluated === playerGuessArray[index]) {
+        // correct guess , no penalty
+
+      } else {
+        // add penalty
+        penaltyTime += 0.5;
+      }
+    });
+    finalTime = timePlayed + penaltyTime;
+
+    scoresToDOM();
+  }
+}
+
+// add tenth of a second to timePlayed
+function addTime() {
+  timePlayed += 0.1;
+  checkTime();
+}
+
+
+// start timer when game page is clicked
+function startTimer() {
+  // reset times
+  timePlayed = 0;
+  penaltyTime = 0;
+  finalTime = 0;
+  timer = setInterval(addTime, 100);
+  gamePage.removeEventListener('click', startTimer);
+}
+
 // scroll, store user selection in playerGuess array
 
 function select(guessedTrue) {
-  console.log(playerGuessArray);
   // 80px scroll
   valueY += 80;
   itemContainer.scroll(0, valueY);
@@ -61,10 +142,10 @@ function getRandomInt(max) {
 function createEquations() {
   // Randomly choose how many correct equations there should be
   const correctEquations = getRandomInt(questionAmount);
-  console.log("correct equations:", correctEquations)
+
   // Set amount of wrong equations
   const wrongEquations = questionAmount - correctEquations;
-  console.log("wrong equations:", wrongEquations);
+
   // Loop through, multiply random numbers up to 9, push to array
   for (let i = 0; i < correctEquations; i++) {
     firstNumber = getRandomInt(9);
@@ -88,7 +169,6 @@ function createEquations() {
     equationsArray.push(equationObject);
   }
   shuffle(equationsArray);
-
 }
 
 // add equations to DOM
@@ -99,7 +179,6 @@ function equationsToDOM() {
     const item = document.createElement('div');
     item.classList.add('item');
     // equation text
-    console.log(equation);
     const equationText = document.createElement('h1');
     equationText.textContent = equation.value;
     // append
@@ -190,3 +269,4 @@ startForm.addEventListener('click', () => {
 
 // eventlisteners
 startForm.addEventListener('submit', selectQuestionAmount);
+gamePage.addEventListener('click', startTimer);
